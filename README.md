@@ -64,7 +64,7 @@ Main Menu
 
 The project is divided into two parallel tracks. The only shared dependency is a brief contract agreement at the start (file formats + four helper function signatures). After that, both developers work independently.
 
-### Person A — Foundation, Validation & CRUD
+### Mohamed Mahdy — Foundation, Validation & CRUD
 
 Owns the entire base layer of the application:
 
@@ -74,7 +74,7 @@ Owns the entire base layer of the application:
 - **Subject CRUD** — full Add / List / Update / Delete for subjects
 - **Bonus (optional)** — partial name search using `grep`
 
-### Person B — Grades, GPA & Reports
+### Yamen Aly — Grades, GPA & Reports
 
 Owns all data processing and output:
 
