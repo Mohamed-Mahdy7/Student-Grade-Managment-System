@@ -1,5 +1,9 @@
 #! /usr/bin/bash
 
+. ./Student_Management.sh
+. ./Subject_Management.sh
+
+
 menu() {
     echo Main Menu
     echo ===================================================
@@ -9,16 +13,16 @@ menu() {
     do 
         case $REPLY in
         1)
-            
+            echo Students
             ;;
         2)
-            
+            echo Subjects
             ;;
         3)
-            
+            echo Grades
             ;;
         4)
-            
+            echo "Reports & Statistics"
             ;;
         5)
             echo "exiting..."
