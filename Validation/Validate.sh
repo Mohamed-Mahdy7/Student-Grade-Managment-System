@@ -1,7 +1,8 @@
 #! /urs/bin/bash
 
 validate_id(){
-    if [[ $student_id =~ ^[0-9]{1,10}$ ]]
+    local id="$1"
+    if [[ "$id" =~ ^[0-9]{1,10}$ ]]
     then
         if [[ -f "sgms_data/students/$student_id.stu" ]]
         then 
@@ -18,7 +19,8 @@ validate_id(){
 }
 
 validate_name(){
-    if [[ -n $student_name && ! $student_name =~ ^[[:space:]]+$ ]]
+    local name="$1"
+    if [[ -n "$name" && ! $student_name =~ ^[[:space:]]+$ ]]
     then
         echo "Valid Student Name"
         return 0
@@ -29,7 +31,8 @@ validate_name(){
 }
 
 validate_email(){
-    if [[ $email =~ ^[^@]+@[^@]+\.[^@]+$  ]]
+    local email="$1"
+    if [[ "$email" =~ ^[^@]+@[^@]+\.[^@]+$  ]]
     then
         echo "Valid Email"
         return 0
@@ -40,7 +43,8 @@ validate_email(){
 }
 
 validate_year(){
-    if [[ $year =~ ^[0-9]{1,6}$ ]]
+    local year="$1"
+    if [[ "$year" =~ ^[0-9]{1,6}$ ]]
     then
         echo "Valid year"
         return 0
@@ -51,14 +55,15 @@ validate_year(){
 }
 
 validate_subject_code(){
-    if [[ $year =~ ^[A-Z]{2,5}[0-9]{2,4}$ ]]
+    local code="$1"
+    if [[ "$code" =~ ^[A-Z]{2,5}[0-9]{2,4}$ ]]
     then
-        if [[ -f "sgms_data/students/$student_id.stu" ]]
+        if [[ -f "sgms_data/subjects/$code.sub" ]]
         then 
-            echo "Student with ID: ${student_id} already exists!"
+            echo "Subject with Code: ${code} already exists!"
             return 1
         else
-            echo "Valid Student ID"
+            echo "Valid Subject Code"
             return 0
         fi
     else
@@ -67,7 +72,8 @@ validate_subject_code(){
 }
 
 validate_credit_hours(){
-    if [[ $credit_hours =~ ^[0-6]$ ]]
+    local hours="$1"
+    if [[ "$hours" =~ ^[0-6]$ ]]
     then
         echo "Valid Credits"
         return 0
@@ -78,7 +84,8 @@ validate_credit_hours(){
 }
 
 validate_score() {
-    if [[ $grade_score =~ ^[0-9]+(\.[0-9]+)?$ ]] && \
+    local score="$1"
+    if [[ "$score" =~ ^[0-9]+(\.[0-9]+)?$ ]] && \
         awk -v gs="$grade_score" ' BEGIN {
             if (gs >= 0.0 && gs <= 100.0) {
                 exit 0;

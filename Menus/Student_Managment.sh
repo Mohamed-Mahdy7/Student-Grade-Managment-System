@@ -3,12 +3,10 @@
 . ./Validation/Validate.sh
 
 student_exist() {
-
-    # local id=$1
-    # local found="$BASE_DIR/students/${id}.stu"
-        if [[ -f "sgms_data/students/${1}.stu" ]]
+    local id="$1"
+        if [[ -f "sgms_data/students/${id}.stu" ]]
             then
-                echo "student with id: ${1} exists"
+                echo "student with id: ${id} exists"
                 return 0
         else
             echo "student doesn't exists"
@@ -25,7 +23,7 @@ student_add() {
         while true
         do
             read -p "Enter Student ID: " student_id
-            if validate_id $student_id
+            if validate_id "$student_id"
             then 
                 break
             fi
@@ -34,7 +32,7 @@ student_add() {
         while true
         do
             read -p "Enter Student Name: " student_name
-            if validate_name $student_name
+            if validate_name "$student_name"
             then
                 break
             fi
@@ -43,7 +41,7 @@ student_add() {
         while true
         do
             read -p "Enter Student Email: " email
-            if validate_email $email
+            if validate_email "$email"
             then
                 break
             fi
@@ -52,7 +50,7 @@ student_add() {
         while true
         do
             read -p "Enter the year: " year
-            if validate_year $year
+            if validate_year "$year"
             then 
                 break
             fi
@@ -83,13 +81,112 @@ student_list() {
     fi
 }
 
-# student_update() {
+student_update() {
+    echo ================================
+    echo Choose which student to update:
+    echo ================================
+    for std in $(ls ./sgms_data/students/)
+    do
+        echo $std
+    done
+    echo =====================================================
+    read -p "Type the ID of the student You want to update: " student_id
+    echo ==========================================
+    if student_exist $student_id
+    then 
+        cat ./sgms_data/students/${student_id}.stu
+        echo ==========================================
+        echo Select what to update: 
+        echo ==========================================
+        select opt in Name Email Year
+        do
+            case $REPLY in
+            [Nn][Aa][Mm][Ee]|1)
+                while true
+                do
+                    read -p "write the new name: " new_name
+                    if validate_name "$new_name"
+                    then
+                        sed -i "s/^Name: .*/Name: '$new_name'/" \
+                            "./sgms_data/students/${student_id}.stu"
+                        
+                        echo Updated!
+                        echo =========================================
+                        cat ./sgms_data/students/${student_id}.stu
+                        echo =========================================
+                        break
+                    fi
+                done
+                ;;
+            [Ee][Mm][Aa][Ii][Ll]|2)
+                while true
+                do
+                    read -p "write the new email: " new_email
+                    if validate_email "$new_email"
+                    then
+                        sed -i "s/^Email: .*/Email: '$new_email'/" \
+                            "./sgms_data/students/${student_id}.stu"
+                        
+                        echo Updated!
+                        echo =========================================
+                        cat ./sgms_data/students/${student_id}.stu
+                        echo =========================================
+                        break
+                    fi
+                done
+                ;;
+            [Yy][Ee][Aa][Rr]|3)
+                while true
+                do
+                    read -p "write the new year: " new_year
+                    if validate_year "$new_year"
+                    then
+                        sed -i "s/^Year: .*/Year: '$new_year'/" \
+                            "./sgms_data/students/${student_id}.stu"
+                        
+                        echo Updated!
+                        echo =========================================
+                        cat ./sgms_data/students/${student_id}.stu
+                        echo =========================================
+                        break
+                    fi
+                done
+                ;;
+            esac
+        done
+    fi
+}  
 
-# }
-
-# student_delete() {
-
-# }
+student_delete() {
+    =======================================
+    echo Choose which student to delete: 
+    echo ==================================
+    for std in $(ls ./sgms_data/students/)
+    do
+        echo $std
+    done
+    echo ===================================================
+    while true
+    do
+        read -p "Type the ID of the student you want to delete: " student_id
+        echo ===================================================
+        if student_exist $student_id
+        then
+            read -p "Are you sure You want to delete student: ${student_id}? (y|n): " answer
+            if [[ $answer == "y" ]]
+            then
+                rm ./sgms_data/students/${student_id}.stu
+                echo Deleted!
+                break
+            elif [[ $answer == "n" ]]
+            then
+                break
+            else
+                continue
+            fi
+        fi
+    done
+}
 
 student_menu() {
     echo Student Menu
