@@ -4,14 +4,14 @@
 
 student_exist() {
     local id="$1"
-        if [[ -f "sgms_data/students/${id}.stu" ]]
-            then
-                echo "student with id: ${id} exists"
-                return 0
-        else
-            echo "student doesn't exists"
-            return 1
-        fi
+    if [[ -f "sgms_data/students/${id}.stu" ]]
+        then
+            echo "student with id: ${id} exists"
+            return 0
+    else
+        echo "student doesn't exists"
+        return 1
+    fi
 }
 
 student_add() {
@@ -158,7 +158,7 @@ student_update() {
 }  
 
 student_delete() {
-    =======================================
+    echo ==================================
     echo Choose which student to delete: 
     echo ==================================
     for std in $(ls ./sgms_data/students/)

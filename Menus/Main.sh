@@ -16,7 +16,7 @@ menu() {
             student_menu
             ;;
         2)
-            echo Subjects
+            subject_menu
             ;;
         3)
             echo Grades

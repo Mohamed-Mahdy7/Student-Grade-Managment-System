@@ -68,6 +68,7 @@ validate_subject_code(){
         fi
     else
         echo "Invalid Subject Code"
+        return 1
     fi
 }
 
