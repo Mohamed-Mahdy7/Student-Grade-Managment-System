@@ -3,7 +3,7 @@
 validate_id(){
     if [[ $student_id =~ ^[0-9]{1,10}$ ]]
     then
-        if [[ -f "sgms_data/students/$student_id.stu"]]
+        if [[ -f "sgms_data/students/$student_id.stu" ]]
         then 
             echo "Student with ID: ${student_id} already exists!"
             return 1
@@ -13,6 +13,7 @@ validate_id(){
         fi
     else
         echo "Student ID must be numeric from 0-9 and less than 10 digits"
+        return 1
     fi
 }
 
@@ -34,6 +35,7 @@ validate_email(){
         return 0
     else
         echo "Invalid Email"
+        return 1
     fi
 }
 
@@ -44,13 +46,14 @@ validate_year(){
         return 0
     else
         echo "Invalid year"
+        return 1
     fi
 }
 
 validate_subject_code(){
     if [[ $year =~ ^[A-Z]{2,5}[0-9]{2,4}$ ]]
     then
-        if [[ -f "sgms_data/students/$student_id.stu"]]
+        if [[ -f "sgms_data/students/$student_id.stu" ]]
         then 
             echo "Student with ID: ${student_id} already exists!"
             return 1
@@ -89,5 +92,6 @@ validate_score() {
         return 0
     else
         echo "Invalid Score"
+        return 1
     fi
 }
