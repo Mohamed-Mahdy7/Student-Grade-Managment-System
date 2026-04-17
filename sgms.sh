@@ -231,70 +231,78 @@ student_update() {
     do
         echo $std
     done
-    echo =====================================================
-    read -p "Type the ID of the student You want to update: " student_id
-    echo ==========================================
-    if student_exist $student_id
+    if [[ ! "$std" ]]
     then 
-        cat ./sgms_data/students/${student_id}.stu
-        echo ==========================================
-        echo Select what to update: 
-        echo ==========================================
-        select opt in Name Email Year
+        echo "No Student Found!"
+    else
+        while true
         do
-            case $REPLY in
-            [Nn][Aa][Mm][Ee]|1)
-                while true
+            echo =====================================================
+            read -p "Type the ID of the student You want to update: " student_id
+            echo =====================================================
+            if student_exist $student_id
+            then 
+                cat ./sgms_data/students/${student_id}.stu
+                echo ==========================================
+                echo Select what to update: 
+                echo ==========================================
+                select opt in Name Email Year
                 do
-                    read -p "write the new name: " new_name
-                    if validate_name "$new_name"
-                    then
-                        sed -i "s/^Name: .*/Name: '$new_name'/" \
-                            "./sgms_data/students/${student_id}.stu"
-                        
-                        echo Updated!
-                        echo =========================================
-                        cat ./sgms_data/students/${student_id}.stu
-                        echo =========================================
-                        break
-                    fi
+                    case $REPLY in
+                    [Nn][Aa][Mm][Ee]|1)
+                        while true
+                        do
+                            read -p "write the new name: " new_name
+                            if validate_name "$new_name"
+                            then
+                                sed -i "s/^Name: .*/Name: '$new_name'/" \
+                                    "./sgms_data/students/${student_id}.stu"
+                                
+                                echo Updated!
+                                echo =========================================
+                                cat ./sgms_data/students/${student_id}.stu
+                                echo =========================================
+                                break
+                            fi
+                        done
+                        ;;
+                    [Ee][Mm][Aa][Ii][Ll]|2)
+                        while true
+                        do
+                            read -p "write the new email: " new_email
+                            if validate_email "$new_email"
+                            then
+                                sed -i "s/^Email: .*/Email: '$new_email'/" \
+                                    "./sgms_data/students/${student_id}.stu"
+                                
+                                echo Updated!
+                                echo =========================================
+                                cat ./sgms_data/students/${student_id}.stu
+                                echo =========================================
+                                break
+                            fi
+                        done
+                        ;;
+                    [Yy][Ee][Aa][Rr]|3)
+                        while true
+                        do
+                            read -p "write the new year: " new_year
+                            if validate_year "$new_year"
+                            then
+                                sed -i "s/^Year: .*/Year: '$new_year'/" \
+                                    "./sgms_data/students/${student_id}.stu"
+                                
+                                echo Updated!
+                                echo =========================================
+                                cat ./sgms_data/students/${student_id}.stu
+                                echo =========================================
+                                break
+                            fi
+                        done
+                        ;;
+                    esac
                 done
-                ;;
-            [Ee][Mm][Aa][Ii][Ll]|2)
-                while true
-                do
-                    read -p "write the new email: " new_email
-                    if validate_email "$new_email"
-                    then
-                        sed -i "s/^Email: .*/Email: '$new_email'/" \
-                            "./sgms_data/students/${student_id}.stu"
-                        
-                        echo Updated!
-                        echo =========================================
-                        cat ./sgms_data/students/${student_id}.stu
-                        echo =========================================
-                        break
-                    fi
-                done
-                ;;
-            [Yy][Ee][Aa][Rr]|3)
-                while true
-                do
-                    read -p "write the new year: " new_year
-                    if validate_year "$new_year"
-                    then
-                        sed -i "s/^Year: .*/Year: '$new_year'/" \
-                            "./sgms_data/students/${student_id}.stu"
-                        
-                        echo Updated!
-                        echo =========================================
-                        cat ./sgms_data/students/${student_id}.stu
-                        echo =========================================
-                        break
-                    fi
-                done
-                ;;
-            esac
+            fi
         done
     fi
 }  
@@ -443,53 +451,61 @@ subject_update() {
     do
         echo $sub
     done
-    echo =====================================================
-    read -p "Type the Code of the subject You want to update: " code
-    echo ==========================================
-    if subject_exist $code
+    if [[ ! "$sub" ]]
     then 
-        cat ./sgms_data/subjects/${code}.sub
-        echo ==========================================
-        echo Select what to update: 
-        echo ==========================================
-        select opt in Name Credits
-        do
-            case $REPLY in
-            [Nn][Aa][Mm][Ee]|1)
-                while true
+        echo "No Subject Found!"
+    else
+        while true
+        do    
+            echo =====================================================
+            read -p "Type the Code of the subject You want to update: " code
+            echo =====================================================
+            if subject_exist $code
+            then 
+                cat ./sgms_data/subjects/${code}.sub
+                echo ==========================================
+                echo Select what to update: 
+                echo ==========================================
+                select opt in Name Credits
                 do
-                    read -p "write the new name: " new_name
-                    if validate_name "$new_name"
-                    then
-                        sed -i "s/^Name: .*/Name: '$new_name'/" \
-                            "./sgms_data/subjects/${code}.sub"
-                        
-                        echo Updated!
-                        echo =========================================
-                        cat ./sgms_data/subjects/${code}.sub
-                        echo =========================================
-                        break
-                    fi
+                    case $REPLY in
+                    [Nn][Aa][Mm][Ee]|1)
+                        while true
+                        do
+                            read -p "write the new name: " new_name
+                            if validate_name "$new_name"
+                            then
+                                sed -i "s/^Name: .*/Name: '$new_name'/" \
+                                    "./sgms_data/subjects/${code}.sub"
+                                
+                                echo Updated!
+                                echo =========================================
+                                cat ./sgms_data/subjects/${code}.sub
+                                echo =========================================
+                                break
+                            fi
+                        done
+                        ;;
+                    [Cc][Rr][Ee][Dd][Ii][Tt][Ss]|2)
+                        while true
+                        do
+                            read -p "write the new credits: " new_credit
+                            if validate_credit_hours "$new_credit"
+                            then
+                                sed -i "s/^Credits: .*/Credits: '$new_credit'/" \
+                                    "./sgms_data/subjects/${code}.sub"
+                                
+                                echo Updated!
+                                echo =========================================
+                                cat ./sgms_data/subjects/${code}.sub
+                                echo =========================================
+                                break
+                            fi
+                        done
+                        ;;
+                    esac
                 done
-                ;;
-            [Cc][Rr][Ee][Dd][Ii][Tt][Ss]|2)
-                while true
-                do
-                    read -p "write the new credits: " new_credit
-                    if validate_credit_hours "$new_credit"
-                    then
-                        sed -i "s/^Credits: .*/Credits: '$new_credit'/" \
-                            "./sgms_data/subjects/${code}.sub"
-                        
-                        echo Updated!
-                        echo =========================================
-                        cat ./sgms_data/subjects/${code}.sub
-                        echo =========================================
-                        break
-                    fi
-                done
-                ;;
-            esac
+            fi
         done
     fi
 }
