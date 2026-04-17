@@ -70,7 +70,7 @@ student_add() {
 student_list() {
     if [[ -d ./sgms_data/students/ ]]
     then
-        if [[ `ls ./sgms_data/students/` == "" ]]
+        if [[ $(ls ./sgms_data/students/) == "" ]]
         then 
             echo "No Students yet!"
         else
@@ -78,6 +78,42 @@ student_list() {
         fi
     else
         echo "Students directory not found!"
+    fi
+}
+
+student_search() {
+    echo =======================================
+    echo Search Student by Name
+    echo =======================================
+    read -p "Enter Student Name to search with: " student_name
+    if [[ $(ls ./sgms_data/students/) == "" ]]
+    then 
+        echo "No Students yet!"
+    else
+        student=$(grep -H "Name:.*$student_name" ./sgms_data/students/*)
+        if [[ -z "$student" ]]
+        then
+            echo "Student not found!"
+        else
+            matched=($(echo "$student" | cut -d: -f1 | sort -u))
+            if (( ${#matched[@]} > 1 )) 
+            then
+                echo
+                echo "Multiple students found!"
+                echo =======================================================
+                echo "Select the number of the student you want to display: "
+                echo =======================================================
+                select f in "${matched[@]}"
+                do
+                    echo
+                    cat "$f"
+                    break
+                done
+            else
+                echo
+                cat "${matched[0]}"
+            fi
+        fi
     fi
 }
 
@@ -193,7 +229,7 @@ student_menu() {
     echo ================================================================
     echo Select the number or the word of the operation you want to do?
     echo ================================================================
-    select opt in Add List Update Delete Exit
+    select opt in Add List Search Update Delete Exit
     do 
         case $REPLY in
         [Aa][Dd][Dd]|1)
@@ -202,13 +238,16 @@ student_menu() {
         [Ll][Ii][Ss][Tt]|2)
             student_list
             ;;
-        [Uu][Pp][Dd][Aa][Tt][Ee]|3)
+        [Ss][Ee][Aa][Rr][Cc][Hh]|3)
+            student_search
+            ;;
+        [Uu][Pp][Dd][Aa][Tt][Ee]|4)
             student_update
             ;;
-        [Dd][Ee][Ll][Ee][Tt][Ee]|4)
+        [Dd][Ee][Ll][Ee][Tt][Ee]|5)
             student_delete
             ;;
-        [Ee][Xx][Ii][Tt]|5)
+        [Ee][Xx][Ii][Tt]|6)
             echo "exiting..."
             return 0
             ;;
