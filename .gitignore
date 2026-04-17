@@ -1,2 +1,5 @@
 *.pdf
 sgms_data
+Menus/Student_Managment.sh
+Menus/Subject_Managment.sh
+Validation/Validate.sh
