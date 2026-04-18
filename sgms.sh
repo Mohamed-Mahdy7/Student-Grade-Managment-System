@@ -575,10 +575,372 @@ subject_menu() {
     done
 }
 
+# Grade Helpers
+
+sub_grades_exists(){
+    local id="$1"
+    if [[ -f "sgms_data/grades/${id}.grd" ]]
+        then
+            echo "Subject grades file with code: ${id} exists"
+            return 0
+    else
+        touch "sgms_data/grades/${id}.grd"
+        echo "Subject grades file with code: ${id} created"
+        return 1
+    fi
+}
+
+score_to_letter(){
+    
+    echo "$1" | awk '
+    {
+        score = $1
+        grade=""
+
+        if(score >= 90){
+            grade = "A+"
+        }else if(score >= 85){
+            grade = "A"
+        }else if(score >= 80){
+            grade = "A-"
+        }else if(score >= 75){
+            grade = "B+"
+        }else if(score >= 70){
+            grade = "B"
+        }else if(score >= 65){
+            grade = "B-"
+        }else if(score >= 60){
+            grade = "C+"
+        }else if(score >= 55){
+            grade = "C"
+        }else if(score >= 50){
+            grade = "C-"
+        }else if(score >= 45){
+            grade = "D"
+        }else{
+            grade = "F"
+        }
+        print grade
+    }
+    '
+}
+
+score_to_gpa(){
+    
+    echo "$1" | awk '
+    {
+        score = $1
+        GPA = 0.0
+
+        if(score >= 85){
+            GPA = 4.0
+        }else if(score >= 80){
+            GPA = 3.7
+        }else if(score >= 75){
+            GPA = 3.3
+        }else if(score >= 70){
+            GPA = 3.0
+        }else if(score >= 65){
+            GPA = 2.7
+        }else if(score >= 60){
+            GPA = 2.3
+        }else if(score >= 55){
+            GPA = 2.0
+        }else if(score >= 50){
+            GPA = 1.7
+        }else if(score >= 45){
+            GPA = 1.0
+        }else{
+            GPA = 0.0
+        }
+        print GPA
+    }
+    '
+}
 
 
+calculate_gpa(){
+    local std_id="$1"
+    local total=0
+    local count=0
+    if student_exist "$std_id"; then
+        for file in ./sgms_data/grades/*.grd
+        do
+            line=$(grep "^${std_id}|" "$file")
+            if [[ -n "$line" ]]
+            then
+                score=$(echo "$line" | cut -d'|' -f2)
+                gpa=$(score_to_gpa "$score")
+                total=$(echo "$total $gpa" |
+                awk '
+                {
+                    print $1+$2
+                }
+                ')
+                count=$((count+1))
+            fi            
+        done
+        echo "$total $count" |
+            awk '
+            {
+                print $1/$2
+            }
+           '
+    fi
+}
 
 
+calculate_weighted_gpa(){
+    local std_id="$1"
+    local total=0
+    local count=0
+    if student_exist "$std_id"; then
+        for file in ./sgms_data/grades/*.grd
+        do
+            grade_line=$(grep "^${std_id}|" "$file")
+            if [[ -n "$grade_line" ]]
+            then
+                score=$(echo "$grade_line" | cut -d'|' -f2)
+                gpa=$(score_to_gpa "$score")
+                sub_code=$(basename "$file" .grd)
+                credits=$(sed -n '3p' "./sgms_data/subjects/${sub_code}.sub")
+                total=$(echo "$total $gpa $credits" |
+                awk '
+                {
+                    print $1+($2*$3)
+                }
+                ')
+                count=$(echo "$count $credits" |
+                awk '
+                {
+                    print $1+$2
+                }
+                ')
+            fi
+        done
+        echo "$total $count" |
+            awk '
+            {
+                print $1/$2
+            }
+           '
+    fi
+}
+
+# Grade CRUD
+
+assign_grade(){
+    echo ================================
+    echo Choose which student to assign:
+    echo ================================
+    for std in $(ls ./sgms_data/students/)
+    do
+        echo $std
+    done
+    echo =====================================================
+    while true
+    do
+        read -p "Type the ID of the student you want to assign: " student_id
+        if student_exist $student_id
+        then
+            break
+        fi
+    done
+    echo =====================================================
+    while true
+    do
+        read -p "Type the ID of the subject you want to assign the grade to: " subject_id
+        if subject_exist $subject_id
+        then
+            break
+        fi
+    done    
+    echo =====================================================    
+    sub_grades_exists $subject_id
+    while true
+    do
+        read -p "Type the score you want to assign to the student : " score
+        if validate_score $score
+        then
+            break
+        fi
+    done
+    echo =====================================================    
+    L=$(score_to_letter $score)
+    if grep -q "^${student_id}|" "./sgms_data/grades/${subject_id}.grd";
+    then
+        echo "This student is already assigned"
+    else
+        sed -i "\$a $student_id|$score|$L" "./sgms_data/grades/${subject_id}.grd"
+        echo "Grade Successfully Assigned"
+    fi
+}
+
+update_grade(){
+    echo =====================================
+    echo Choose which student grade to update:
+    echo =====================================
+    for std in $(ls ./sgms_data/students/)
+    do
+        echo $std
+    done
+    echo =====================================================
+    while true
+    do
+        read -p "Type the ID of the student you want to update: " student_id
+        if student_exist $student_id
+        then
+            break
+        fi
+    done
+    echo =====================================================
+    while true
+    do
+        read -p "Type the ID of the subject you want to update the grade of: " subject_id
+        if subject_exist $subject_id
+        then
+            break
+        fi
+    done    
+    echo =====================================================    
+    while true
+    do
+        read -p "Type the score you want to update : " score
+        if validate_score $score
+        then
+            break
+        fi
+    done
+    echo =====================================================    
+    L=$(score_to_letter $score)
+    sed -i "/^${student_id}|/d" "./sgms_data/grades/${subject_id}.grd"
+    sed -i "\$a $student_id|$score|$L" "./sgms_data/grades/${subject_id}.grd"
+    echo "Grade Successfully Updated"
+}
+
+delete_grade(){
+    echo ================================
+    echo Choose which student to delete:
+    echo ================================
+    for std in $(ls ./sgms_data/students/)
+    do
+        echo $std
+    done
+    echo =====================================================
+    while true
+    do
+        read -p "Type the ID of the student you want to delete: " student_id
+        if student_exist $student_id
+        then
+            break
+        fi
+    done
+    echo =====================================================
+    while true
+    do
+        read -p "Type the ID of the subject you want to delete the grade of: " subject_id
+        if subject_exist $subject_id
+        then
+            break
+        fi
+    done    
+    echo =====================================================  
+    sed -i "/^${student_id}|/d" "./sgms_data/grades/${subject_id}.grd"
+    echo "Grade Deleted Successfully" 
+}
+
+
+view_grades_by_subject(){
+    echo ================================
+    echo Choose which Subject to view:
+    echo ================================
+    while true
+    do
+        read -p "Type the ID of the subject you want to view the grades of: " subject_id
+        if subject_exist $subject_id
+        then
+            break
+        fi
+    done
+    for file in ./sgms_data/grades/${subject_id}.grd
+    do
+        for std_id in $(cut -d'|' -f1 "$file")
+        do
+            line=$(grep "^${std_id}|" "$file")
+            score=$(echo "$line" | cut -d'|' -f2)
+            letter=$(echo "$line" | cut -d'|' -f3)
+
+            std_name=$(sed -n '2p' "./sgms_data/students/${std_id}.stu")
+
+            echo "$std_id | $std_name | $score | $letter"
+        done
+    done
+}
+
+view_grades_by_student(){
+    echo ================================
+    echo Choose which Student to view:
+    echo ================================
+    while true
+    do
+        read -p "Type the ID of the student you want to view: " student_id
+        if student_exist $student_id
+        then
+            break
+        fi
+    done
+    for file in ./sgms_data/grades/*.grd
+    do
+        line=$(grep "^${student_id}|" "$file")
+        if [[ -n "$line" ]]
+        then
+            std_id=$(echo "$line" | cut -d'|' -f1)
+            score=$(echo "$line" | cut -d'|' -f2)
+            letter=$(echo "$line" | cut -d'|' -f3)
+            
+            std_name=$(sed -n '2p' "./sgms_data/students/${std_id}.stu")
+            
+            sub_code=$(basename "$file" .grd)
+            sub_name=$(sed -n '2p' "./sgms_data/subjects/${sub_code}.sub")
+            
+            echo "$std_id | $std_name | $sub_name | $score | $letter"
+        fi
+        
+    done
+}
+
+# Grade Menu
+grade_menu(){
+    select opt in "Assign" "Update" "Delete" "ViewSubject" "ViewStudent" "Exit"
+    do
+        case $REPLY in
+            1)
+            assign_grade
+            ;;
+            2)
+            update_grade
+            ;;
+            3)
+            delete_grade
+            ;;
+            4)
+            view_grades_by_subject
+            ;;
+            5)
+            view_grades_by_student
+            ;;
+            6)
+            echo "exiting..."
+            return 0
+            ;;
+            *)
+            echo Invalid Selection!
+            echo Try Again
+            continue
+            ;;
+        esac
+    done
+}
 
 
 menu() {
@@ -596,7 +958,7 @@ menu() {
             subject_menu
             ;;
         3)
-            echo Grades
+            grade_menu
             ;;
         4)
             echo "Reports & Statistics"
