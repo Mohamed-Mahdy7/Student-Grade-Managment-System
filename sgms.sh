@@ -1,13 +1,19 @@
 #! /usr/bin/bash
 
+shopt -s extglob
+
 BASE_DIR=$(dirname $0)/sgms_data
 mkdir -p $BASE_DIR/students $BASE_DIR/subjects $BASE_DIR/grades
+
+STUDENT_PATH=$BASE_DIR/students
+SUBJECT_PATH=$BASE_DIR/subjects
+GRADE_PATH=$BASE_DIR/grades
 
 validate_id(){
     local id="$1"
     if [[ "$id" =~ ^[0-9]{1,10}$ ]]
     then
-        if [[ -f "sgms_data/students/$student_id.stu" ]]
+        if [[ -f ""$STUDENT_PATH"/$student_id.stu" ]]
         then 
             echo "Student with ID: ${student_id} already exists!"
             return 1
@@ -16,7 +22,7 @@ validate_id(){
             return 0
         fi
     else
-        echo "Student ID must be numeric from 0-9 and less than 10 digits"
+        echo "Error: Student ID must be numeric from 0-9 and less than 10 digits"
         return 1
     fi
 }
@@ -28,7 +34,8 @@ validate_name(){
         echo "Valid Student Name"
         return 0
     else
-        echo "Student Name shouldn't be empty or only spaces, only printable characters"
+        echo "Error: Student Name shouldn't be empty or only spaces,"
+        echo "Only printable characters allowed"
         return 1
     fi
 }
@@ -40,19 +47,19 @@ validate_email(){
         echo "Valid Email"
         return 0
     else
-        echo "Invalid Email"
+        echo "Error: Email Must contain @ and domain dot,like : user@domain.ext"
         return 1
     fi
 }
 
 validate_year(){
     local year="$1"
-    if [[ "$year" =~ ^[0-9]{1,6}$ ]]
+    if [[ "$year" =~ ^[0-6]$ ]]
     then
         echo "Valid year"
         return 0
     else
-        echo "Invalid year"
+        echo "Error: Year must be a number from 1-6"
         return 1
     fi
 }
@@ -61,7 +68,7 @@ validate_subject_code(){
     local code="$1"
     if [[ "$code" =~ ^[A-Z]{2,5}[0-9]{2,4}$ ]]
     then
-        if [[ -f "sgms_data/subjects/$code.sub" ]]
+        if [[ -f ""$SUBJECT_PATH"/$code.sub" ]]
         then 
             echo "Subject with Code: ${code} already exists!"
             return 1
@@ -70,7 +77,7 @@ validate_subject_code(){
             return 0
         fi
     else
-        echo "Invalid Subject Code"
+        echo "Error: Code must start with Capital (2-5) letters + (2-4) numbers "
         return 1
     fi
 }
@@ -82,7 +89,7 @@ validate_credit_hours(){
         echo "Valid Credits"
         return 0
     else
-        echo "Invalid Credits"
+        echo ""Error: Credits must be a number from 1-6""
         return 1
     fi
 }
@@ -102,14 +109,14 @@ validate_score() {
         echo "Valid Score"
         return 0
     else
-        echo "Invalid Score"
+        echo "Error: Score must be float number (0.0 - 100.0)"
         return 1
     fi
 }
 
 student_exist() {
     local id="$1"
-    if [[ -f "sgms_data/students/${id}.stu" ]]
+    if [[ -f ""$STUDENT_PATH"/${id}.stu" ]]
         then
             echo "student with id: ${id} exists"
             return 0
@@ -161,11 +168,11 @@ student_add() {
             fi
         done
 
-        touch ./sgms_data/students/${student_id}.stu
-        echo "ID: '$student_id'" >> ./sgms_data/students/${student_id}.stu
-        echo "Name: '$student_name'" >> ./sgms_data/students/${student_id}.stu
-        echo "Email: '$email'" >> ./sgms_data/students/${student_id}.stu
-        echo "Year: '$year'" >> ./sgms_data/students/${student_id}.stu
+        touch "$STUDENT_PATH"/${student_id}.stu
+        echo "ID: '$student_id'" >> "$STUDENT_PATH"/${student_id}.stu
+        echo "Name: '$student_name'" >> "$STUDENT_PATH"/${student_id}.stu
+        echo "Email: '$email'" >> "$STUDENT_PATH"/${student_id}.stu
+        echo "Year: '$year'" >> "$STUDENT_PATH"/${student_id}.stu
 
         echo "Student added successfully!"
         break
@@ -173,13 +180,13 @@ student_add() {
 }
 
 student_list() {
-    if [[ -d ./sgms_data/students/ ]]
+    if [[ -d "$STUDENT_PATH"/ ]]
     then
-        if [[ $(ls ./sgms_data/students/) == "" ]]
+        if ! find "$STUDENT_PATH" -type f -name "*.stu" | read
         then 
             echo "No Students yet!"
         else
-            ls ./sgms_data/students/
+            ls "$STUDENT_PATH"/
         fi
     else
         echo "Students directory not found!"
@@ -191,16 +198,23 @@ student_search() {
     echo Search Student by Name
     echo =======================================
     read -p "Enter Student Name to search with: " student_name
-    if [[ $(ls ./sgms_data/students/) == "" ]]
+    if ! find "$STUDENT_PATH" -type f -name "*.stu" | read
     then 
         echo "No Students yet!"
     else
-        student=$(grep -H "Name:.*$student_name" ./sgms_data/students/*)
+        student=$(grep -H "Name:.*$student_name" "$STUDENT_PATH"/*.stu)
+        echo "student ${student}"
         if [[ -z "$student" ]]
         then
             echo "Student not found!"
         else
-            matched=($(echo "$student" | cut -d: -f1 | sort -u))
+            declare -a path=($(echo "$student" | cut -d: -f1 | sort -u))
+            echo "path ${path}"
+            for m in "${path[@]}"
+            do
+                matched+=("$(basename "$m")")
+                echo "matched ${matched}"
+            done
             if (( ${#matched[@]} > 1 )) 
             then
                 echo
@@ -211,13 +225,14 @@ student_search() {
                 select f in "${matched[@]}"
                 do
                     echo
-                    cat "$f"
+                    cat ""$STUDENT_PATH"/$f"
                     break
                 done
             else
                 echo
-                cat "${matched[0]}"
+                cat "${path[0]}"
             fi
+            unset matched
         fi
     fi
 }
@@ -227,7 +242,7 @@ student_update() {
     echo ================================
     echo Choose which student to update:
     echo ================================
-    for std in $(ls ./sgms_data/students/)
+    for std in $(ls "$STUDENT_PATH"/)
     do
         echo $std
     done
@@ -242,7 +257,7 @@ student_update() {
             echo =====================================================
             if student_exist $student_id
             then 
-                cat ./sgms_data/students/${student_id}.stu
+                cat "$STUDENT_PATH"/${student_id}.stu
                 echo ==========================================
                 echo Select what to update: 
                 echo ==========================================
@@ -256,11 +271,11 @@ student_update() {
                             if validate_name "$new_name"
                             then
                                 sed -i "s/^Name: .*/Name: '$new_name'/" \
-                                    "./sgms_data/students/${student_id}.stu"
+                                    ""$STUDENT_PATH"/${student_id}.stu"
                                 
                                 echo Updated!
                                 echo =========================================
-                                cat ./sgms_data/students/${student_id}.stu
+                                cat "$STUDENT_PATH"/${student_id}.stu
                                 echo =========================================
                                 break
                             fi
@@ -273,11 +288,11 @@ student_update() {
                             if validate_email "$new_email"
                             then
                                 sed -i "s/^Email: .*/Email: '$new_email'/" \
-                                    "./sgms_data/students/${student_id}.stu"
+                                    ""$STUDENT_PATH"/${student_id}.stu"
                                 
                                 echo Updated!
                                 echo =========================================
-                                cat ./sgms_data/students/${student_id}.stu
+                                cat "$STUDENT_PATH"/${student_id}.stu
                                 echo =========================================
                                 break
                             fi
@@ -290,11 +305,11 @@ student_update() {
                             if validate_year "$new_year"
                             then
                                 sed -i "s/^Year: .*/Year: '$new_year'/" \
-                                    "./sgms_data/students/${student_id}.stu"
+                                    ""$STUDENT_PATH"/${student_id}.stu"
                                 
                                 echo Updated!
                                 echo =========================================
-                                cat ./sgms_data/students/${student_id}.stu
+                                cat "$STUDENT_PATH"/${student_id}.stu
                                 echo =========================================
                                 break
                             fi
@@ -311,7 +326,7 @@ student_delete() {
     echo ==================================
     echo Choose which student to delete: 
     echo ==================================
-    for std in $(ls ./sgms_data/students/)
+    for std in $(ls "$STUDENT_PATH"/)
     do
         echo $std
     done
@@ -325,7 +340,7 @@ student_delete() {
             read -p "Are you sure You want to delete student: ${student_id}? (y|n): " answer
             if [[ $answer == "y" ]]
             then
-                rm ./sgms_data/students/${student_id}.stu
+                rm "$STUDENT_PATH"/${student_id}.stu
                 echo Deleted!
                 break
             elif [[ $answer == "n" ]]
@@ -376,7 +391,7 @@ student_menu() {
 
 subject_exist() {
     local id="$1"
-    if [[ -f "sgms_data/subjects/${id}.sub" ]]
+    if [[ -f ""$SUBJECT_PATH"/${id}.sub" ]]
         then
             echo "subjects with code: ${id} exists"
             return 0
@@ -419,10 +434,10 @@ subject_add() {
             fi
         done
         
-        touch ./sgms_data/subjects/${code}.sub
-        echo "Code: '$code'" >> ./sgms_data/subjects/${code}.sub
-        echo "Name: '$subject_name'" >> ./sgms_data/subjects/${code}.sub
-        echo "Credits: '$credits'" >> ./sgms_data/subjects/${code}.sub
+        touch "$SUBJECT_PATH"/${code}.sub
+        echo "Code: '$code'" >> "$SUBJECT_PATH"/${code}.sub
+        echo "Name: '$subject_name'" >> "$SUBJECT_PATH"/${code}.sub
+        echo "Credits: '$credits'" >> "$SUBJECT_PATH"/${code}.sub
 
         echo "Subject added successfully!"
         break
@@ -430,13 +445,13 @@ subject_add() {
 }
 
 subject_list() {
-    if [[ -d ./sgms_data/subjects/ ]]
+    if [[ -d "$SUBJECT_PATH"/ ]]
     then
-        if [[ `ls ./sgms_data/subjects/` == "" ]]
+        if [[ `ls "$SUBJECT_PATH"/` == "" ]]
         then 
             echo "No Subjects yet!"
         else
-            ls ./sgms_data/subjects/
+            ls "$SUBJECT_PATH"/
         fi
     else
         echo "Subjects directory not found!"
@@ -447,7 +462,7 @@ subject_update() {
     echo ================================
     echo Choose which subject to update:
     echo ================================
-    for sub in $(ls ./sgms_data/subjects/)
+    for sub in $(ls "$SUBJECT_PATH"/)
     do
         echo $sub
     done
@@ -462,7 +477,7 @@ subject_update() {
             echo =====================================================
             if subject_exist $code
             then 
-                cat ./sgms_data/subjects/${code}.sub
+                cat "$SUBJECT_PATH"/${code}.sub
                 echo ==========================================
                 echo Select what to update: 
                 echo ==========================================
@@ -476,11 +491,11 @@ subject_update() {
                             if validate_name "$new_name"
                             then
                                 sed -i "s/^Name: .*/Name: '$new_name'/" \
-                                    "./sgms_data/subjects/${code}.sub"
+                                    ""$SUBJECT_PATH"/${code}.sub"
                                 
                                 echo Updated!
                                 echo =========================================
-                                cat ./sgms_data/subjects/${code}.sub
+                                cat "$SUBJECT_PATH"/${code}.sub
                                 echo =========================================
                                 break
                             fi
@@ -493,11 +508,11 @@ subject_update() {
                             if validate_credit_hours "$new_credit"
                             then
                                 sed -i "s/^Credits: .*/Credits: '$new_credit'/" \
-                                    "./sgms_data/subjects/${code}.sub"
+                                    ""$SUBJECT_PATH"/${code}.sub"
                                 
                                 echo Updated!
                                 echo =========================================
-                                cat ./sgms_data/subjects/${code}.sub
+                                cat "$SUBJECT_PATH"/${code}.sub
                                 echo =========================================
                                 break
                             fi
@@ -514,7 +529,7 @@ subject_delete() {
     echo ==================================
     echo Choose which subject to delete: 
     echo ==================================
-    for std in $(ls ./sgms_data/subjects/)
+    for std in $(ls "$SUBJECT_PATH"/)
     do
         echo $std
     done
@@ -528,7 +543,7 @@ subject_delete() {
             read -p "Are you sure You want to delete subject: ${code}? (y|n): " answer
             if [[ $answer == "y" ]]
             then
-                rm ./sgms_data/subjects/${code}.sub
+                rm "$SUBJECT_PATH"/${code}.sub
                 echo Deleted!
                 break
             elif [[ $answer == "n" ]]
