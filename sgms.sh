@@ -29,7 +29,7 @@ validate_id(){
 
 validate_name(){
     local name="$1"
-    if [[ -n "$name" && ! $name =~ ^[[:space:]]+$ ]]
+    if [[ -n "$name" && ! $name =~ ^[A-Za-z][A-Za-z[:space:]]+$ ]]
     then
         echo "Valid Student Name"
         return 0
@@ -42,7 +42,7 @@ validate_name(){
 
 validate_email(){
     local email="$1"
-    if [[ "$email" =~ ^[^@]+@[^@]+\.[^@]+$  ]]
+    if [[ "$email" =~ ^[A-Za-z][^@]+@[^@]+\.[^@]+$  ]]
     then
         echo "Valid Email"
         return 0
@@ -95,8 +95,8 @@ validate_credit_hours(){
 }
 
 validate_score() {
-    local score="$1"
-    if [[ "$score" =~ ^[0-9]+(\.[0-9]+)?$ ]] && \
+    score="$1"
+    if [[ "$score" =~ ^[0-9]+\.[0-9]+$ ]] && \
         awk -v gs="$score" ' BEGIN {
             if (gs >= 0.0 && gs <= 100.0) {
                 exit 0;
@@ -400,6 +400,7 @@ student_delete() {
     while true
     do
         echo ===================================================
+        echo "hint: Type 'back' if you want to exist delete menu"
         read -p "Type the ID of the student you want to delete: " student_id
         echo ===================================================
         if [[ "$student_id" == "back" ]]
@@ -411,10 +412,30 @@ student_delete() {
             read -p "Are you sure You want to delete student: ${student_id}? (y|n): " answer
             if [[ $answer == "y" ]]
             then
-                rm "$STUDENT_PATH"/${student_id}.stu
-                echo Deleted!
-                read -p "Press 'Enter' to continue..."
-                break
+                found=0
+
+                for grd in "$GRADE_PATH"/*.grd
+                do
+                    if [[ -f "$grd" ]]
+                    then
+                        if grep "^$student_id|" "$grd"
+                        then
+                            found=1
+                            break
+                        fi
+                    fi
+                done
+                if [[ $found == 1 ]]
+                then
+                    echo "This Student has grades," 
+                    echo "You must delete his/her grade first!"
+                else
+                    rm "$STUDENT_PATH"/${student_id}.stu
+                    echo Deleted!
+                    read -p "Press 'Enter' to continue..."
+                    break
+                fi
+                
             elif [[ $answer == "n" ]]
             then
                 read -p "Press 'Enter' to continue..."
@@ -493,6 +514,7 @@ subject_add() {
         echo =========================
         while true
         do
+            echo "hint: Type 'back' if you want to exist add menu"
             read -p "Enter Subject Code: " code
             if [[ "$code" == 'back' ]]
             then 
@@ -507,6 +529,7 @@ subject_add() {
         echo =========================
         while true
         do
+            echo "hint: Type 'back' if you want to exist add menu"
             read -p "Enter Subject Name: " subject_name
             if [[ "$subject_name" == 'back' ]]
             then 
@@ -521,6 +544,7 @@ subject_add() {
         echo =========================
         while true
         do
+            echo "hint: Type 'back' if you want to exist add menu"
             read -p "Enter Subject Credit Hours: " credits
             if [[ "$credits" == 'back' ]]
             then 
@@ -662,6 +686,7 @@ subject_delete() {
     while true
     do
         echo ===================================================
+        echo "hint: Type 'back' if you want to exist delete menu"
         read -p "Type the Code of the subject you want to delete: " code
         echo ===================================================
         if [[ "$code" == "back" ]]
