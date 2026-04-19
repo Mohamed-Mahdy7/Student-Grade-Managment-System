@@ -28,8 +28,8 @@ validate_id(){
 }
 
 validate_name(){
-    local name="$1"
-    if [[ -n "$name" && ! $name =~ ^[A-Za-z][A-Za-z[:space:]]+$ ]]
+    name="$1"
+    if [[ $name =~ ^[A-Za-z]+[[:space:]][A-Za-z]+$ ]]
     then
         echo "Valid Student Name"
         return 0
@@ -41,8 +41,8 @@ validate_name(){
 }
 
 validate_email(){
-    local email="$1"
-    if [[ "$email" =~ ^[A-Za-z][^@]+@[^@]+\.[^@]+$  ]]
+    email="$1"
+    if [[ "$email" =~ ^[A-Za-z][^@]*@[^@]+\.[^@]+$  ]]
     then
         echo "Valid Email"
         return 0
