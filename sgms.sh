@@ -534,6 +534,7 @@ subject_add() {
         done
         
         touch "$SUBJECT_PATH"/${code}.sub
+        touch "$GRADE_PATH"/${code}.grd
         echo "Code: '$code'" >> "$SUBJECT_PATH"/${code}.sub
         echo "Name: '$subject_name'" >> "$SUBJECT_PATH"/${code}.sub
         echo "Credits: '$credits'" >> "$SUBJECT_PATH"/${code}.sub
@@ -734,13 +735,12 @@ subject_menu() {
 
 sub_grades_exists(){
     local id="$1"
-    if [[ -f "sgms_data/grades/${id}.grd" ]]
+    if [[ -f "$GRADE_PATH/${id}.grd" ]]
         then
             echo "Subject grades file with code: ${id} exists"
             return 0
     else
-        touch "sgms_data/grades/${id}.grd"
-        echo "Subject grades file with code: ${id} created"
+        echo "Error: Subject grades file with code: ${id} does not exist"
         return 1
     fi
 }
@@ -808,7 +808,7 @@ score_to_gpa(){
         }else{
             GPA = 0.0
         }
-        print GPA
+        printf "%.1f\n", GPA
     }
     '
 }
@@ -829,7 +829,7 @@ calculate_gpa(){
                 total=$(echo "$total $gpa" |
                 awk '
                 {
-                    print $1+$2
+                    printf "%.2f\n", $1+$2
                 }
                 ')
                 count=$((count+1))
@@ -838,7 +838,7 @@ calculate_gpa(){
         echo "$total $count" |
             awk '
             {
-                print $1/$2
+                printf "%.2f\n", $1/$2
             }
            '
     fi
@@ -868,7 +868,7 @@ calculate_weighted_gpa(){
                 count=$(echo "$count $credits" |
                 awk '
                 {
-                    print $1+$2
+                    printf "%.2f\n", $1+$2
                 }
                 ')
             fi
@@ -876,7 +876,7 @@ calculate_weighted_gpa(){
         echo "$total $count" |
             awk '
             {
-                print $1/$2
+                printf "%.2f\n", $1/$2
             }
            '
     fi
@@ -1183,11 +1183,15 @@ subject_statistics(){
         awk '{
             if ($2>$1)
                 print $2
+            else
+                print $1
         }')
         min=$(echo "$min $score" |
         awk '{
             if ($1>$2)
                 print $2
+            else
+                print $1
         }')
 
         total=$(echo "$total $score" |
@@ -1196,7 +1200,13 @@ subject_statistics(){
         }')
         count=$((count+1))
         
-        if [[$score>=50]]
+        PassorFail=$(echo "$score" |
+         awk '{
+            if($1>=50)
+                print "pass"
+         }')
+        
+        if [[ "$PassorFail" == "pass" ]]
         then
             passC=$((passC+1))
         fi
@@ -1277,9 +1287,102 @@ subject_statistics(){
     echo ================================
 }
 
+top_students(){
+    while true
+    do
+        read -p "Type how many top students to find: " N
+        if [[ "$N" =~ ^[0-9]{1,10}$ ]]
+        then
+            break
+        else
+            echo "Error: Enter a number"
+        fi
+    done  
+    echo ================================
+    echo ========= Top Students =========
+    echo ================================
+    
+
+    for file in ./sgms_data/students/*.stu
+    do
+        std_id=$(basename "$file" .stu)
+        std_name=$(sed -n '2p' "$file")
+        gpa=$(calculate_gpa "$std_id")
+        echo "$gpa $std_id $std_name"
+
+    done | sort -rn | head -n "$N"
+}
+
+failing_students(){
+    echo ================================
+    echo ======= Failing Students =======
+    echo ================================
+    for file in ./sgms_data/students/*.stu
+        do
+            std_id=$(basename "$file" .stu)
+            std_name=$(sed -n '2p' "$file")
+            gpa=$(calculate_gpa "$std_id")
+            fail_check=$(echo "$gpa" | awk '{
+                if ($1<1.0)
+                    print "fail"
+            }')
+            if [[ $fail_check == "fail" ]]
+            then
+                echo "$std_id | $std_name | GPA: $gpa"
+            fi
+            for grade_file in ./sgms_data/grades/*.grd
+            do
+                line=$(grep "^${std_id}|" "$grade_file")
+                if [[ -n "$line" ]]
+                then
+                    letter=$(echo "$line" | cut -d'|' -f3)
+                    if [[ "$letter" == "F" ]]
+                    then
+                        sub_code=$(basename "$grade_file" .grd)
+                        echo "$std_id | $std_name | $sub_code"
+                    fi
+                fi
+            done
+
+        done
+}
+
+full_matrix(){
+    echo =================================
+    echo ======= Full Grade Matrix =======
+    echo =================================
+    columns="Student"
+    for sub_file in ./sgms_data/subjects/*.sub
+    do
+        sub_name=$(sed -n '2p' "$sub_file")
+        columns="$columns | $sub_name"
+    done
+    echo "$columns"
+    for file in ./sgms_data/students/*.stu
+    do
+        std_id=$(basename "$file" .stu)
+        std_name=$(sed -n '2p' "$file")
+        row="$std_name"
+        
+        for sub_file in ./sgms_data/subjects/*.sub
+        do
+            sub_code=$(basename "$sub_file" .sub)
+            line=$(grep "^${std_id}|" "./sgms_data/grades/${sub_code}.grd")
+            
+            if [[ -n "$line" ]]
+            then
+                score=$(echo "$line" | cut -d'|' -f2)
+                row="$row | $score"
+            else
+                row="$row | -"
+            fi
+        done
+        echo "$row"
+    done
+}
 # Reports Menu
 report_menu(){
-    select opt in "Student Transcript" "Subject Statistics" "Top" "Failing" "Matrix" "Exit"
+    select opt in "Student Transcript" "Subject Statistics" "Top Students" "Failing" "Matrix" "Exit"
     do
         case $REPLY in
             1)
@@ -1289,10 +1392,13 @@ report_menu(){
             subject_statistics
             ;;
             3)
+            top_students
             ;;
             4)
+            failing_students
             ;;
             5)
+            full_matrix
             ;;
             6)
             echo "exiting..."
