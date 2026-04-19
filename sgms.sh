@@ -118,7 +118,7 @@ student_exist() {
     local id="$1"
     if [[ -f ""$STUDENT_PATH"/${id}.stu" ]]
         then
-            echo "student with id: ${id} exists"
+            # echo "student with id: ${id} exists" 
             return 0
     else
         echo "student doesn't exists"
@@ -699,6 +699,7 @@ subject_delete() {
             if [[ $answer == "y" ]]
             then
                 rm "$SUBJECT_PATH"/${code}.sub
+                rm "$GRADE_PATH"/${code}.grd
                 echo Deleted!
                 read -p "Press 'Enter' to continue..."
                 break
@@ -762,7 +763,7 @@ sub_grades_exists(){
     local id="$1"
     if [[ -f "$GRADE_PATH/${id}.grd" ]]
         then
-            echo "Subject grades file with code: ${id} exists"
+            # echo "Subject grades file with code: ${id} exists"
             return 0
     else
         echo "Error: Subject grades file with code: ${id} does not exist"
@@ -874,7 +875,8 @@ calculate_weighted_gpa(){
     local std_id="$1"
     local total=0
     local count=0
-    if student_exist "$std_id"; then
+    if student_exist "$std_id"
+    then
         for file in ./sgms_data/grades/*.grd
         do
             grade_line=$(grep "^${std_id}|" "$file")
@@ -883,7 +885,7 @@ calculate_weighted_gpa(){
                 score=$(echo "$grade_line" | cut -d'|' -f2)
                 gpa=$(score_to_gpa "$score")
                 sub_code=$(basename "$file" .grd)
-                credits=$(sed -n '3p' "./sgms_data/subjects/${sub_code}.sub")
+                credits=$(sed -n '3p' "./sgms_data/subjects/${sub_code}.sub" | cut -d"'" -f2)
                 total=$(echo "$total $gpa $credits" |
                 awk '
                 {
@@ -1157,7 +1159,7 @@ student_transcript(){
     done
     CGPA=$(calculate_weighted_gpa "$std_id")
     echo ================================
-    echo "Cumulative GPA: $CGPA"
+    echo "Cumulative GPA:" "$CGPA"
 
 }
 
@@ -1346,29 +1348,29 @@ failing_students(){
         do
             std_id=$(basename "$file" .stu)
             std_name=$(sed -n '2p' "$file"  | cut -d"'" -f2)
-            gpa=$(calculate_gpa "$std_id")
-            fail_check=$(echo "$gpa" | awk '{
-                if ($1<1.0)
-                    print "fail"
-            }')
-            if [[ $fail_check == "fail" ]]
-            then
-                echo "$std_id | $std_name | GPA: $gpa"
-            fi
+            failed_sub=0
             for grade_file in ./sgms_data/grades/*.grd
             do
                 line=$(grep "^${std_id}|" "$grade_file")
                 if [[ -n "$line" ]]
                 then
                     letter=$(echo "$line" | cut -d'|' -f3)
+                    gpa=$(calculate_gpa "$std_id")
+                    failed_gpa=$(echo "$gpa" | awk '{
+                        if ($1<1.0)
+                            print 1
+                    }')
                     if [[ "$letter" == "F" ]]
                     then
-                        sub_code=$(basename "$grade_file" .grd)
-                        echo "$std_id | $std_name | $sub_code"
+                        failed_sub=1
                     fi
+                    
+                    if [[ $failed_sub -eq 1 || $failed_gpa -eq 1 ]]
+                    then
+                        echo "$std_id | $std_name | GPA: $gpa"
+                    fi           
                 fi
             done
-
         done
 }
 
