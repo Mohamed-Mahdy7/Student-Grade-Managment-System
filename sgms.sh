@@ -97,7 +97,7 @@ validate_credit_hours(){
 validate_score() {
     local score="$1"
     if [[ "$score" =~ ^[0-9]+(\.[0-9]+)?$ ]] && \
-        awk -v gs="$grade_score" ' BEGIN {
+        awk -v gs="$score" ' BEGIN {
             if (gs >= 0.0 && gs <= 100.0) {
                 exit 0;
             } 
@@ -1308,35 +1308,6 @@ report_menu(){
 }
 
 menu() {
-    echo Main Menu
-    echo ==============================================================
-    echo Select the number of the operation you want to do?
-    echo ==============================================================
-    select opt in "Manage Students" "Manage Subjects" "Manage Grades" "Reports & Statistics" "Exit"
-    do 
-        case $REPLY in
-        1)
-            student_menu
-            ;;
-        2)
-            subject_menu
-            ;;
-        3)
-            grade_menu
-            ;;
-        4)
-            echo "Reports & Statistics"
-            ;;
-        5)
-            echo "exiting..."
-            return 0
-            ;;
-        *)
-            echo Invalid Selection!
-            echo Try Again
-            continue
-            ;;
-        esac
     while true
     do
         clear
@@ -1356,11 +1327,11 @@ menu() {
                 break
                 ;;
             3)
-                echo Grades
+                grade_menu
                 break
                 ;;
             4)
-                echo "Reports & Statistics"
+                report_menu
                 break
                 ;;
             5)
