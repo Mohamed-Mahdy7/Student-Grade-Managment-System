@@ -29,7 +29,7 @@ validate_id(){
 
 validate_name(){
     local name="$1"
-    if [[ -n "$name" && ! $student_name =~ ^[[:space:]]+$ ]]
+    if [[ -n "$name" && ! $name =~ ^[[:space:]]+$ ]]
     then
         echo "Valid Student Name"
         return 0
@@ -97,7 +97,7 @@ validate_credit_hours(){
 validate_score() {
     local score="$1"
     if [[ "$score" =~ ^[0-9]+(\.[0-9]+)?$ ]] && \
-        awk -v gs="$grade_score" ' BEGIN {
+        awk -v gs="$score" ' BEGIN {
             if (gs >= 0.0 && gs <= 100.0) {
                 exit 0;
             } 
@@ -129,13 +129,20 @@ student_exist() {
 student_add() {
     while true
     do
+        clear
         echo =========================
         echo "Add new student"
         echo =========================
         while true
         do
+            echo "hint: Type 'back' if you want to exist add menu"
             read -p "Enter Student ID: " student_id
-            if validate_id "$student_id"
+            if [[ "$student_id" == 'back' ]]
+            then 
+                echo "Going back..."
+                read -p "Press 'Enter' to continue..."
+                break  2
+            elif validate_id "$student_id"
             then 
                 break
             fi
@@ -143,8 +150,14 @@ student_add() {
         echo =========================
         while true
         do
+            echo "hint: Type 'back' if you want to exist add menu"
             read -p "Enter Student Name: " student_name
-            if validate_name "$student_name"
+            if [[ "$student_name" == 'back' ]]
+            then 
+                echo "Going back..."
+                read -p "Press 'Enter' to continue..."
+                break 2
+            elif validate_name "$student_name"
             then
                 break
             fi
@@ -152,8 +165,14 @@ student_add() {
         echo =========================
         while true
         do
+            echo "hint: Type 'back' if you want to exist add menu"
             read -p "Enter Student Email: " email
-            if validate_email "$email"
+            if [[ "$email" == 'back' ]]
+            then 
+                echo "Going back..."
+                read -p "Press 'Enter' to continue..."
+                break 2
+            elif validate_email "$email"
             then
                 break
             fi
@@ -161,8 +180,14 @@ student_add() {
         echo =========================
         while true
         do
+            echo "hint: Type 'back' if you want to exist add menu"
             read -p "Enter the year: " year
-            if validate_year "$year"
+            if [[ "$year" == 'back' ]]
+            then 
+                echo "Going back..."
+                read -p "Press 'Enter' to continue..."
+                break 2
+            elif validate_year "$year"
             then 
                 break
             fi
@@ -173,47 +198,56 @@ student_add() {
         echo "Name: '$student_name'" >> "$STUDENT_PATH"/${student_id}.stu
         echo "Email: '$email'" >> "$STUDENT_PATH"/${student_id}.stu
         echo "Year: '$year'" >> "$STUDENT_PATH"/${student_id}.stu
-
+        echo
         echo "Student added successfully!"
+        read -p "Press 'Enter' to continue..."
         break
     done
 }
 
 student_list() {
+    clear
     if [[ -d "$STUDENT_PATH"/ ]]
     then
         if ! find "$STUDENT_PATH" -type f -name "*.stu" | read
         then 
             echo "No Students yet!"
         else
-            ls "$STUDENT_PATH"/
+            echo ==============
+            echo "Students: "
+            echo ==============
+            ls "$STUDENT_PATH"/*.stu | cut -d'/' -f4
         fi
     else
         echo "Students directory not found!"
     fi
+    read -p "Press 'Enter' to continue..."
 }
 
 student_search() {
+    clear
     echo =======================================
     echo Search Student by Name
     echo =======================================
+    echo "hint: Type 'back' if you want to exist search menu"
     read -p "Enter Student Name to search with: " student_name
-    if ! find "$STUDENT_PATH" -type f -name "*.stu" | read
+    if [[ "$student_name" == 'back' ]]
+    then
+        echo "Going back..."
+        break
+    elif ! find "$STUDENT_PATH" -type f -name "*.stu" | read
     then 
         echo "No Students yet!"
     else
         student=$(grep -H "Name:.*$student_name" "$STUDENT_PATH"/*.stu)
-        echo "student ${student}"
         if [[ -z "$student" ]]
         then
             echo "Student not found!"
         else
             declare -a path=($(echo "$student" | cut -d: -f1 | sort -u))
-            echo "path ${path}"
             for m in "${path[@]}"
             do
                 matched+=("$(basename "$m")")
-                echo "matched ${matched}"
             done
             if (( ${#matched[@]} > 1 )) 
             then
@@ -222,11 +256,20 @@ student_search() {
                 echo =======================================================
                 echo "Select the number of the student you want to display: "
                 echo =======================================================
-                select f in "${matched[@]}"
+                select f in "${matched[@]}" "Back"
                 do
-                    echo
-                    cat ""$STUDENT_PATH"/$f"
-                    break
+                    if [[ "$f" == 'Back' ]]
+                    then
+                        echo "Going back..."
+                        break
+                    elif [[ -n "$f" ]]
+                    then
+                        echo
+                        cat "$STUDENT_PATH"/"$f"
+                        break
+                    else
+                        echo "Wrong number"
+                    fi
                 done
             else
                 echo
@@ -235,16 +278,18 @@ student_search() {
             unset matched
         fi
     fi
+    read -p "Press 'Enter' to continue..."
 }
 
 
 student_update() {
+    clear
     echo ================================
     echo Choose which student to update:
     echo ================================
-    for std in $(ls "$STUDENT_PATH"/)
+    for std in "$STUDENT_PATH"/*.stu
     do
-        echo $std
+        echo "$(basename "$std")"
     done
     if [[ ! "$std" ]]
     then 
@@ -253,21 +298,29 @@ student_update() {
         while true
         do
             echo =====================================================
+            echo "hint: Type 'back' if you want to exist update menu"
             read -p "Type the ID of the student You want to update: " student_id
             echo =====================================================
-            if student_exist $student_id
+            if [[ "$student_id" == 'back' ]]
+            then
+                echo "Going back..."
+                read -p "Press 'Enter' to continue..."
+                break
+            elif student_exist $student_id
             then 
+                clear
                 cat "$STUDENT_PATH"/${student_id}.stu
                 echo ==========================================
                 echo Select what to update: 
                 echo ==========================================
-                select opt in Name Email Year
+                select opt in Name Email Year Back
                 do
                     case $REPLY in
                     [Nn][Aa][Mm][Ee]|1)
                         while true
                         do
                             read -p "write the new name: " new_name
+                            clear
                             if validate_name "$new_name"
                             then
                                 sed -i "s/^Name: .*/Name: '$new_name'/" \
@@ -277,6 +330,8 @@ student_update() {
                                 echo =========================================
                                 cat "$STUDENT_PATH"/${student_id}.stu
                                 echo =========================================
+                                read -p "Press 'Enter' to continue..."
+                                echo "Type 4 or 'Back' to go back..."
                                 break
                             fi
                         done
@@ -285,6 +340,7 @@ student_update() {
                         while true
                         do
                             read -p "write the new email: " new_email
+                            clear
                             if validate_email "$new_email"
                             then
                                 sed -i "s/^Email: .*/Email: '$new_email'/" \
@@ -294,6 +350,8 @@ student_update() {
                                 echo =========================================
                                 cat "$STUDENT_PATH"/${student_id}.stu
                                 echo =========================================
+                                read -p "Press 'Enter' to continue..."
+                                echo " Type 4 or 'Back' to go back..."
                                 break
                             fi
                         done
@@ -302,6 +360,7 @@ student_update() {
                         while true
                         do
                             read -p "write the new year: " new_year
+                            clear
                             if validate_year "$new_year"
                             then
                                 sed -i "s/^Year: .*/Year: '$new_year'/" \
@@ -311,9 +370,16 @@ student_update() {
                                 echo =========================================
                                 cat "$STUDENT_PATH"/${student_id}.stu
                                 echo =========================================
+                                read -p "Press 'Enter' to continue..."
+                                echo " Type 4 or 'Back' to go back..."
                                 break
                             fi
                         done
+                        ;;
+                    [Bb][Aa][Cc][Kk]|4)
+                        echo "Going back..."
+                        read -p "Press 'Enter' to continue..."
+                        break
                         ;;
                     esac
                 done
@@ -323,30 +389,38 @@ student_update() {
 }  
 
 student_delete() {
+    clear
     echo ==================================
     echo Choose which student to delete: 
     echo ==================================
-    for std in $(ls "$STUDENT_PATH"/)
+    for std in  "$STUDENT_PATH"/*.stu
     do
-        echo $std
+        echo "$(basename "$std")"
     done
-    echo ===================================================
     while true
     do
+        echo ===================================================
         read -p "Type the ID of the student you want to delete: " student_id
         echo ===================================================
-        if student_exist $student_id
+        if [[ "$student_id" == "back" ]]
+        then
+            echo "Going back..."
+            break
+        elif student_exist $student_id
         then
             read -p "Are you sure You want to delete student: ${student_id}? (y|n): " answer
             if [[ $answer == "y" ]]
             then
                 rm "$STUDENT_PATH"/${student_id}.stu
                 echo Deleted!
+                read -p "Press 'Enter' to continue..."
                 break
             elif [[ $answer == "n" ]]
             then
+                read -p "Press 'Enter' to continue..."
                 break
             else
+                echo "Invalid input!"
                 continue
             fi
         fi
@@ -354,38 +428,47 @@ student_delete() {
 }
 
 student_menu() {
-    echo Student Menu
-    echo ================================================================
-    echo Select the number or the word of the operation you want to do?
-    echo ================================================================
-    select opt in Add List Search Update Delete Exit
+    while true
     do 
-        case $REPLY in
-        [Aa][Dd][Dd]|1)
-            student_add
-            ;;
-        [Ll][Ii][Ss][Tt]|2)
-            student_list
-            ;;
-        [Ss][Ee][Aa][Rr][Cc][Hh]|3)
-            student_search
-            ;;
-        [Uu][Pp][Dd][Aa][Tt][Ee]|4)
-            student_update
-            ;;
-        [Dd][Ee][Ll][Ee][Tt][Ee]|5)
-            student_delete
-            ;;
-        [Ee][Xx][Ii][Tt]|6)
-            echo "exiting..."
-            return 0
-            ;;
-        *)
-            echo Invalid Selection!
-            echo Try Again
-            continue
-            ;;
-        esac
+        clear
+        echo Student Menu
+        echo ================================================================
+        echo Select the number or the word of the operation you want to do?
+        echo ================================================================
+        select opt in Add List Search Update Delete Exit
+        do 
+            case $REPLY in
+            [Aa][Dd][Dd]|1)
+                student_add
+                break
+                ;;
+            [Ll][Ii][Ss][Tt]|2)
+                student_list
+                break
+                ;;
+            [Ss][Ee][Aa][Rr][Cc][Hh]|3)
+                student_search
+                break
+                ;;
+            [Uu][Pp][Dd][Aa][Tt][Ee]|4)
+                student_update
+                break
+                ;;
+            [Dd][Ee][Ll][Ee][Tt][Ee]|5)
+                student_delete
+                break
+                ;;
+            [Ee][Xx][Ii][Tt]|6)
+                echo "exiting..."
+                return 0
+                ;;
+            *)
+                echo Invalid Selection!
+                echo Try Again
+                continue
+                ;;
+            esac
+        done
     done
 }
 
@@ -404,13 +487,19 @@ subject_exist() {
 subject_add() {
     while true
     do
+        clear
         echo =========================
         echo "Add new Subject"
         echo =========================
         while true
         do
             read -p "Enter Subject Code: " code
-            if validate_subject_code "$code"
+            if [[ "$code" == 'back' ]]
+            then 
+                echo "Going back..."
+                read -p "Press 'Enter' to continue..."
+                break  2
+            elif validate_subject_code "$code"
             then
                 break
             fi
@@ -419,7 +508,12 @@ subject_add() {
         while true
         do
             read -p "Enter Subject Name: " subject_name
-            if validate_name "$subject_name"
+            if [[ "$subject_name" == 'back' ]]
+            then 
+                echo "Going back..."
+                read -p "Press 'Enter' to continue..."
+                break  2
+            elif validate_name "$subject_name"
             then
                 break
             fi
@@ -428,7 +522,12 @@ subject_add() {
         while true
         do
             read -p "Enter Subject Credit Hours: " credits
-            if validate_credit_hours "$credits"
+            if [[ "$credits" == 'back' ]]
+            then 
+                echo "Going back..."
+                read -p "Press 'Enter' to continue..."
+                break  2
+            elif validate_credit_hours "$credits"
             then
                 break
             fi
@@ -439,33 +538,40 @@ subject_add() {
         echo "Code: '$code'" >> "$SUBJECT_PATH"/${code}.sub
         echo "Name: '$subject_name'" >> "$SUBJECT_PATH"/${code}.sub
         echo "Credits: '$credits'" >> "$SUBJECT_PATH"/${code}.sub
-
+        echo
         echo "Subject added successfully!"
+        read -p "Press 'Enter' to continue..."
         break
     done
 }
 
 subject_list() {
+    clear
     if [[ -d "$SUBJECT_PATH"/ ]]
     then
-        if [[ `ls "$SUBJECT_PATH"/` == "" ]]
+        if ! find "$SUBJECT_PATH"/ -type f -name "*.sub" | read
         then 
             echo "No Subjects yet!"
         else
-            ls "$SUBJECT_PATH"/
+            echo ==============
+            echo "Subjects: "
+            echo ==============
+            ls "$SUBJECT_PATH"/*.sub | cut -d'/' -f4
         fi
     else
         echo "Subjects directory not found!"
     fi
+    read -p "Press 'Enter' to continue..."
 }
 
 subject_update() {
+    clear
     echo ================================
     echo Choose which subject to update:
     echo ================================
-    for sub in $(ls "$SUBJECT_PATH"/)
+    for sub in "$SUBJECT_PATH"/*.sub
     do
-        echo $sub
+        echo "$(basename "$sub")"
     done
     if [[ ! "$sub" ]]
     then 
@@ -474,21 +580,29 @@ subject_update() {
         while true
         do    
             echo =====================================================
+            echo "hint: Type 'back' if you want to exist update menu"
             read -p "Type the Code of the subject You want to update: " code
             echo =====================================================
-            if subject_exist $code
+            if [[ "$code" == 'back' ]]
+            then
+                echo "Going back..."
+                read -p "Press 'Enter' to continue..."
+                break
+            elif subject_exist $code
             then 
+                clear
                 cat "$SUBJECT_PATH"/${code}.sub
                 echo ==========================================
                 echo Select what to update: 
                 echo ==========================================
-                select opt in Name Credits
+                select opt in Name Credits Back
                 do
                     case $REPLY in
                     [Nn][Aa][Mm][Ee]|1)
                         while true
                         do
                             read -p "write the new name: " new_name
+                            clear
                             if validate_name "$new_name"
                             then
                                 sed -i "s/^Name: .*/Name: '$new_name'/" \
@@ -498,6 +612,8 @@ subject_update() {
                                 echo =========================================
                                 cat "$SUBJECT_PATH"/${code}.sub
                                 echo =========================================
+                                read -p "Press 'Enter' to continue..."
+                                echo "Type 3 or 'Back' to go back..."
                                 break
                             fi
                         done
@@ -506,6 +622,7 @@ subject_update() {
                         while true
                         do
                             read -p "write the new credits: " new_credit
+                            clear
                             if validate_credit_hours "$new_credit"
                             then
                                 sed -i "s/^Credits: .*/Credits: '$new_credit'/" \
@@ -515,9 +632,16 @@ subject_update() {
                                 echo =========================================
                                 cat "$SUBJECT_PATH"/${code}.sub
                                 echo =========================================
+                                read -p "Press 'Enter' to continue..."
+                                echo "Type 3 or 'Back' to go back..."
                                 break
                             fi
                         done
+                        ;;
+                        [Bb][Aa][Cc][Kk]|3)
+                            echo "Going back..."
+                            read -p "Press 'Enter' to continue..."
+                            break
                         ;;
                     esac
                 done
@@ -527,30 +651,38 @@ subject_update() {
 }
 
 subject_delete() {
+    clear
     echo ==================================
     echo Choose which subject to delete: 
     echo ==================================
-    for std in $(ls "$SUBJECT_PATH"/)
+    for std in  "$SUBJECT_PATH"/*.sub
     do
-        echo $std
+        echo "$(basename "$std")"
     done
-    echo ===================================================
     while true
     do
+        echo ===================================================
         read -p "Type the Code of the subject you want to delete: " code
         echo ===================================================
-        if subject_exist $code
+        if [[ "$code" == "back" ]]
+        then
+            echo "Going back..."
+            break
+        elif subject_exist $code
         then
             read -p "Are you sure You want to delete subject: ${code}? (y|n): " answer
             if [[ $answer == "y" ]]
             then
                 rm "$SUBJECT_PATH"/${code}.sub
                 echo Deleted!
+                read -p "Press 'Enter' to continue..."
                 break
             elif [[ $answer == "n" ]]
             then
+                read -p "Press 'Enter' to continue..."
                 break
             else
+                echo "Invalid input!"
                 continue
             fi
         fi
@@ -559,35 +691,43 @@ subject_delete() {
 
 
 subject_menu() {
-    echo Subject Menu
-    echo ================================================================
-    echo Select the number or the word of the operation you want to do?
-    echo ================================================================
-    select opt in Add List Update Delete Exit
-    do 
-        case $REPLY in
-        [Aa][Dd][Dd]|1)
-            subject_add
-            ;;
-        [Ll][Ii][Ss][Tt]|2)
-            subject_list
-            ;;
-        [Uu][Pp][Dd][Aa][Tt][Ee]|3)
-            subject_update
-            ;;
-        [Dd][Ee][Ll][Ee][Tt][Ee]|4)
-            subject_delete
-            ;;
-        [Ee][Xx][Ii][Tt]|5)
-            echo "exiting..."
-            return 0
-            ;;
-        *)
-            echo Invalid Selection!
-            echo Try Again
-            continue
-            ;;
-        esac
+    while true
+    do
+        clear
+        echo Subject Menu
+        echo ================================================================
+        echo Select the number or the word of the operation you want to do?
+        echo ================================================================
+        select opt in Add List Update Delete Exit
+        do 
+            case $REPLY in
+            [Aa][Dd][Dd]|1)
+                subject_add
+                break
+                ;;
+            [Ll][Ii][Ss][Tt]|2)
+                subject_list
+                break
+                ;;
+            [Uu][Pp][Dd][Aa][Tt][Ee]|3)
+                subject_update
+                break
+                ;;
+            [Dd][Ee][Ll][Ee][Tt][Ee]|4)
+                subject_delete
+                break
+                ;;
+            [Ee][Xx][Ii][Tt]|5)
+                echo "exiting..."
+                return 0
+                ;;
+            *)
+                echo Invalid Selection!
+                echo Try Again
+                continue
+                ;;
+            esac
+        done
     done
 }
 
@@ -1274,41 +1414,50 @@ report_menu(){
 }
 
 menu() {
-    echo Main Menu
-    echo ==============================================================
-    echo Select the number of the operation you want to do?
-    echo ==============================================================
-    select opt in "Manage Students" "Manage Subjects" "Manage Grades" "Reports & Statistics" "Exit"
-    do 
-        case $REPLY in
-        1)
-            student_menu
-            ;;
-        2)
-            subject_menu
-            ;;
-        3)
-            grade_menu
-            ;;
-        4)
-            report_menu
-            ;;
-        5)
-            echo "exiting..."
-            return 0
-            ;;
-        *)
-            echo Invalid Selection!
-            echo Try Again
-            continue
-            ;;
-        esac
+    while true
+    do
+        clear
+        echo Main Menu
+        echo ==============================================================
+        echo Select the number of the operation you want to do?
+        echo ==============================================================
+        select opt in "Manage Students" "Manage Subjects" "Manage Grades" "Reports & Statistics" "Exit"
+        do 
+            case $REPLY in
+            1)
+                student_menu
+                break
+                ;;
+            2)
+                subject_menu
+                break
+                ;;
+            3)
+                grade_menu
+                break
+                ;;
+            4)
+                report_menu
+                break
+                ;;
+            5)
+                echo "exiting..."
+                return 0
+                ;;
+            *)
+                echo Invalid Selection!
+                echo Try Again
+                continue
+                ;;
+            esac
+        done
     done
 }
 
 # main Call
 while true
 do
+    clear
     menu
     status=$?
 
