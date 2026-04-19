@@ -926,7 +926,7 @@ assign_grade(){
     then
         echo "This student is already assigned"
     else
-        sed -i "\$a $student_id|$score|$L" "./sgms_data/grades/${subject_id}.grd"
+        echo "$student_id|$score|$L" >> "./sgms_data/grades/${subject_id}.grd"
         echo "Grade Successfully Assigned"
     fi
 }
@@ -969,7 +969,7 @@ update_grade(){
     echo =====================================================    
     L=$(score_to_letter $score)
     sed -i "/^${student_id}|/d" "./sgms_data/grades/${subject_id}.grd"
-    sed -i "\$a $student_id|$score|$L" "./sgms_data/grades/${subject_id}.grd"
+    echo "$student_id|$score|$L" >> "./sgms_data/grades/${subject_id}.grd"
     echo "Grade Successfully Updated"
 }
 
@@ -1025,7 +1025,7 @@ view_grades_by_subject(){
             score=$(echo "$line" | cut -d'|' -f2)
             letter=$(echo "$line" | cut -d'|' -f3)
 
-            std_name=$(sed -n '2p' "./sgms_data/students/${std_id}.stu")
+            std_name=$(sed -n '2p' "./sgms_data/students/${std_id}.stu"  | cut -d"'" -f2)
 
             echo "$std_id | $std_name | $score | $letter"
         done
@@ -1053,10 +1053,10 @@ view_grades_by_student(){
             score=$(echo "$line" | cut -d'|' -f2)
             letter=$(echo "$line" | cut -d'|' -f3)
             
-            std_name=$(sed -n '2p' "./sgms_data/students/${std_id}.stu")
+            std_name=$(sed -n '2p' "./sgms_data/students/${std_id}.stu" | cut -d"'" -f2)
             
             sub_code=$(basename "$file" .grd)
-            sub_name=$(sed -n '2p' "./sgms_data/subjects/${sub_code}.sub")
+            sub_name=$(sed -n '2p' "./sgms_data/subjects/${sub_code}.sub" | cut -d"'" -f2)
             
             echo "$std_id | $std_name | $sub_name | $score | $letter"
         fi
@@ -1123,7 +1123,7 @@ student_transcript(){
             letter=$(echo "$line" | cut -d'|' -f3)
             
             sub_code=$(basename "$file" .grd)
-            sub_name=$(sed -n '2p' "./sgms_data/subjects/${sub_code}.sub")
+            sub_name=$(sed -n '2p' "./sgms_data/subjects/${sub_code}.sub" | cut -d"'" -f2)
 
             GPA=$(score_to_gpa "$score")
 
@@ -1306,7 +1306,7 @@ top_students(){
     for file in ./sgms_data/students/*.stu
     do
         std_id=$(basename "$file" .stu)
-        std_name=$(sed -n '2p' "$file")
+        std_name=$(sed -n '2p' "$file" | cut -d"'" -f2)
         gpa=$(calculate_gpa "$std_id")
         echo "$gpa $std_id $std_name"
 
@@ -1320,7 +1320,7 @@ failing_students(){
     for file in ./sgms_data/students/*.stu
         do
             std_id=$(basename "$file" .stu)
-            std_name=$(sed -n '2p' "$file")
+            std_name=$(sed -n '2p' "$file"  | cut -d"'" -f2)
             gpa=$(calculate_gpa "$std_id")
             fail_check=$(echo "$gpa" | awk '{
                 if ($1<1.0)
@@ -1354,14 +1354,14 @@ full_matrix(){
     columns="Student"
     for sub_file in ./sgms_data/subjects/*.sub
     do
-        sub_name=$(sed -n '2p' "$sub_file")
+        sub_name=$(sed -n '2p' "$sub_file" | cut -d"'" -f2)
         columns="$columns | $sub_name"
     done
     echo "$columns"
     for file in ./sgms_data/students/*.stu
     do
         std_id=$(basename "$file" .stu)
-        std_name=$(sed -n '2p' "$file")
+        std_name=$(sed -n '2p' "$file" | cut -d"'" -f2)
         row="$std_name"
         
         for sub_file in ./sgms_data/subjects/*.sub
