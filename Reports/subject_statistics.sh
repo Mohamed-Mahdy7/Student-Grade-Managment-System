@@ -12,7 +12,10 @@ subject_statistics(){
         read -p "Type the Code of the Subject you want to view: " subject_id
         if subject_exist $subject_id
         then
-            break
+            if sub_grades_exists $subject_id && $sub_grades_not_empty $subject_id
+            then
+                break
+            fi
         fi
     done
     echo ================================

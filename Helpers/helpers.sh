@@ -40,6 +40,18 @@ sub_grades_exists(){
     fi
 }
 
+sub_grades_not_empty(){
+    local id="$1"
+    if [[ -f "$GRADE_PATH/${id}.grd" && -n "$(cat $GRADE_PATH/${id}.grd")" ]]
+        then
+            # echo "Subject grades file with code: ${id} exists"
+            return 0
+    else
+        echo "Error: Subject grades file with code: ${id} is empty"
+        return 1
+    fi
+}
+
 score_to_letter(){
     
     echo "$1" | awk '

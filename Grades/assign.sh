@@ -26,11 +26,14 @@ assign_grade(){
         read -p "Type the Code of the subject you want to assign the grade to: " subject_id
         if subject_exist $subject_id
         then
-            break
+            if sub_grades_exists $subject_id
+            then
+                break
+            fi
         fi
-    done    
-    echo =====================================================    
-    sub_grades_exists $subject_id
+    done
+    
+    echo =====================================================
     while true
     do
         read -p "Type the score you want to assign to the student : " score
@@ -44,6 +47,7 @@ assign_grade(){
     if grep -q "^${student_id}|" "./sgms_data/grades/${subject_id}.grd";
     then
         echo "This student is already assigned"
+        return
     else
         echo "$student_id|$score|$L" >> "./sgms_data/grades/${subject_id}.grd"
         echo "Grade Successfully Assigned"

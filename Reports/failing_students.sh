@@ -15,6 +15,11 @@ failing_students(){
             failed_sub=0
             for grade_file in ./sgms_data/grades/*.grd
             do
+                sub_code=$(basename "$file" .grd)
+                if ! sub_grades_not_empty "$sub_code"
+                then
+                    continue
+                fi
                 line=$(grep "^${std_id}|" "$grade_file")
                 if [[ -n "$line" ]]
                 then

@@ -17,6 +17,12 @@ view_grades_by_student(){
     done
     for file in ./sgms_data/grades/*.grd
     do
+        sub_code=$(basename "$file" .grd)
+        if ! sub_grades_not_empty "$sub_code"
+        then
+            continue
+        fi
+        
         line=$(grep "^${student_id}|" "$file")
         if [[ -n "$line" ]]
         then
