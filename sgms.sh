@@ -92,7 +92,7 @@ validate_credit_hours(){
         # echo "Valid Credits"
         return 0
     else
-        echo ""Error: Credits must be a number from 1-6""
+        echo "Error: Credits must be a number from 1-6"
         return 1
     fi
 }
@@ -327,7 +327,7 @@ student_update() {
                             if validate_name "$new_name"
                             then
                                 sed -i "s/^Name: .*/Name: '$new_name'/" \
-                                    ""$STUDENT_PATH"/${student_id}.stu"
+                                    "$STUDENT_PATH/${student_id}.stu"
                                 
                                 echo Updated!
                                 echo =========================================
@@ -347,7 +347,7 @@ student_update() {
                             if validate_email "$new_email"
                             then
                                 sed -i "s/^Email: .*/Email: '$new_email'/" \
-                                    ""$STUDENT_PATH"/${student_id}.stu"
+                                    "$STUDENT_PATH"/${student_id}.stu"
                                 
                                 echo Updated!
                                 echo =========================================
@@ -367,7 +367,7 @@ student_update() {
                             if validate_year "$new_year"
                             then
                                 sed -i "s/^Year: .*/Year: '$new_year'/" \
-                                    ""$STUDENT_PATH"/${student_id}.stu"
+                                    "$STUDENT_PATH"/${student_id}.stu"
                                 
                                 echo Updated!
                                 echo =========================================
@@ -864,12 +864,17 @@ calculate_gpa(){
                 count=$((count+1))
             fi            
         done
-        echo "$total $count" |
+        if [[ $count -eq 0 ]]
+        then
+            echo Error: Student has no grades
+        else
+            echo "$total $count" |
             awk '
             {
                 printf "%.2f\n", $1/$2
             }
-           '
+            '
+        fi
     fi
 }
 
@@ -889,27 +894,36 @@ calculate_weighted_gpa(){
                 gpa=$(score_to_gpa "$score")
                 sub_code=$(basename "$file" .grd)
                 credits=$(sed -n '3p' "./sgms_data/subjects/${sub_code}.sub" | cut -d"'" -f2)
-                total=$(echo "$total $gpa $credits" |
-                awk '
-                {
-                    print $1+($2*$3)
-                }
-                ')
-                count=$(echo "$count $credits" |
-                awk '
-                {
-                    printf "%.2f\n", $1+$2
-                }
-                ')
+                if [[ $credits -eq 0 ]]
+                then
+                    echo Error: Subject has no credits
+                else
+                    total=$(echo "$total $gpa $credits" |
+                    awk '
+                    {
+                        print $1+($2*$3)
+                    }
+                    ')
+                    count=$(echo "$count $credits" |
+                    awk '
+                    {
+                        printf "%.2f\n", $1+$2
+                    }
+                    ')
+                fi
             fi
         done
-        echo "$total $count" |
+        if [[ $count -eq 0 ]]
+        then
+            echo Error: Student has no grades
+        else
+            echo "$total $count" |
             awk '
             {
                 printf "%.2f\n", $1/$2
             }
-           '
-    fi
+            '
+        fi
 }
 
 # Grade CRUD
@@ -1030,8 +1044,22 @@ delete_grade(){
         fi
     done    
     echo =====================================================  
-    sed -i "/^${student_id}|/d" "./sgms_data/grades/${subject_id}.grd"
-    echo "Grade Deleted Successfully" 
+    read -p "Are you sure You want to delete subject: ${subject_id}? (y|n): " answer
+    if [[ $answer == "y" ]]
+    then
+        sed -i "/^${student_id}|/d" "./sgms_data/grades/${subject_id}.grd"
+        echo "Grade Deleted Successfully" 
+        read -p "Press 'Enter' to continue..."
+        break
+    elif [[ $answer == "n" ]]
+    then
+        read -p "Press 'Enter' to continue..."
+        break
+    else
+        echo "Invalid input!"
+        continue
+    fi
+    
 }
 
 
@@ -1331,7 +1359,7 @@ top_students(){
     echo ================================
     echo ========= Top Students =========
     echo ================================
-    
+    echo " ID | Name | GPA "
 
     for file in ./sgms_data/students/*.stu
     do
@@ -1347,6 +1375,7 @@ failing_students(){
     echo ================================
     echo ======= Failing Students =======
     echo ================================
+    echo " ID | Name | GPA "
     for file in ./sgms_data/students/*.stu
         do
             std_id=$(basename "$file" .stu)
@@ -1366,14 +1395,13 @@ failing_students(){
                     if [[ "$letter" == "F" ]]
                     then
                         failed_sub=1
-                    fi
-                    
-                    if [[ $failed_sub -eq 1 || $failed_gpa -eq 1 ]]
-                    then
-                        echo "$std_id | $std_name | GPA: $gpa"
-                    fi           
+                    fi        
                 fi
             done
+            if [[ $failed_sub -eq 1 || $failed_gpa -eq 1 ]]
+            then
+                echo "$std_id | $std_name | GPA: $gpa"
+            fi
         done
 }
 
