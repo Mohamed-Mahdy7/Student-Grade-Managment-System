@@ -12,7 +12,10 @@ view_grades_by_subject(){
         read -p "Type the Code of the subject you want to view the grades of: " subject_id
         if subject_exist $subject_id
         then
-            break
+            if sub_grades_exists $subject_id && $sub_grades_not_empty $subject_id
+            then
+                break
+            fi
         fi
     done
     for file in ./sgms_data/grades/${subject_id}.grd
