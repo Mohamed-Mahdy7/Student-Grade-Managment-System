@@ -1,7 +1,3 @@
 *.pdf
 sgms_data
-Menus/*
-Validation/Validate.sh
-Grade_Managment/Grade_Managment.sh
-Grade_Managment/Grade_Helpers.sh
-Reports_Statistics/Reports.sh
+old.sh

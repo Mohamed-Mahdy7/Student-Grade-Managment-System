@@ -13,8 +13,7 @@ SGMS is a single Bash script (`sgms.sh`) that runs entirely in the terminal. It 
 ## How to Run
 
 ```bash
-chmod +x sgms.sh
-./sgms.sh
+bash ./sgms.sh
 ```
 
 The script auto-creates all required directories (`sgms_data/`) on the first run. No setup beyond that is needed.
