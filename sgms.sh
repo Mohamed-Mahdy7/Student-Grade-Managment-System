@@ -9,16 +9,17 @@ STUDENT_PATH=$BASE_DIR/students
 SUBJECT_PATH=$BASE_DIR/subjects
 GRADE_PATH=$BASE_DIR/grades
 
+# Validation Functions
 validate_id(){
-    local id="$1"
+    id="$1"
     if [[ "$id" =~ ^[0-9]{1,10}$ ]]
     then
-        if [[ -f ""$STUDENT_PATH"/$student_id.stu" ]]
+        if [[ -f "$STUDENT_PATH"/$id.stu ]]
         then 
-            echo "Student with ID: ${student_id} already exists!"
+            echo "Student with ID: ${id} already exists!"
             return 1
         else
-            echo "Valid Student ID"
+            # echo "Valid Student ID"
             return 0
         fi
     else
@@ -29,34 +30,36 @@ validate_id(){
 
 validate_name(){
     name="$1"
-    if [[ $name =~ ^[A-Za-z]+[[:space:]][A-Za-z]+$ ]]
+    if [[ $name =~ ^[A-Za-z]+[[:space:]A-Za-z0-9]+$ ]]
     then
-        echo "Valid Student Name"
+        # echo "Valid Student Name"
         return 0
     else
         echo "Error: Student Name shouldn't be empty or only spaces,"
-        echo "Only printable characters allowed"
+        echo "Only printable characters allowed, ex) Ahmed Ali"
         return 1
     fi
 }
 
 validate_email(){
     email="$1"
-    if [[ "$email" =~ ^[A-Za-z][^@]*@[^@]+\.[^@]+$  ]]
+    if [[ "$email" =~ ^[a-z][a-z0-9._%-]*@[a-z0-9.-]+\.[a-z]{2,}$ ]]
     then
-        echo "Valid Email"
+        # echo "Valid Email"
         return 0
     else
-        echo "Error: Email Must contain @ and domain dot,like : user@domain.ext"
+        echo "Error: Email Must contain @ and domain dot,"
+        echo "only lowercase characters, numbers (_,%,-) allowed."
+        echo "ex) user@domain.ext"
         return 1
     fi
 }
 
 validate_year(){
-    local year="$1"
-    if [[ "$year" =~ ^[0-6]$ ]]
+    year="$1"
+    if [[ "$year" =~ ^[1-6]$ ]]
     then
-        echo "Valid year"
+        # echo "Valid year"
         return 0
     else
         echo "Error: Year must be a number from 1-6"
@@ -65,28 +68,28 @@ validate_year(){
 }
 
 validate_subject_code(){
-    local code="$1"
+    code="$1"
     if [[ "$code" =~ ^[A-Z]{2,5}[0-9]{2,4}$ ]]
     then
-        if [[ -f ""$SUBJECT_PATH"/$code.sub" ]]
+        if [[ -f "$SUBJECT_PATH"/$code.sub ]]
         then 
             echo "Subject with Code: ${code} already exists!"
             return 1
         else
-            echo "Valid Subject Code"
+            # echo "Valid Subject Code"
             return 0
         fi
     else
-        echo "Error: Code must start with Capital (2-5) letters + (2-4) numbers "
+        echo "Error: Code must start with uppercase letters (2-5) + (2-4) numbers "
         return 1
     fi
 }
 
 validate_credit_hours(){
-    local hours="$1"
-    if [[ "$hours" =~ ^[0-6]$ ]]
+    hours="$1"
+    if [[ "$hours" =~ ^[1-6]$ ]]
     then
-        echo "Valid Credits"
+        # echo "Valid Credits"
         return 0
     else
         echo ""Error: Credits must be a number from 1-6""
@@ -106,7 +109,7 @@ validate_score() {
             }
         }'
     then
-        echo "Valid Score"
+        # echo "Valid Score"
         return 0
     else
         echo "Error: Score must be float number (0.0 - 100.0)"
@@ -114,9 +117,10 @@ validate_score() {
     fi
 }
 
+#Student Management
 student_exist() {
-    local id="$1"
-    if [[ -f ""$STUDENT_PATH"/${id}.stu" ]]
+    id="$1"
+    if [[ -f "$STUDENT_PATH"/"${id}".stu ]]
         then
             # echo "student with id: ${id} exists" 
             return 0
@@ -193,11 +197,11 @@ student_add() {
             fi
         done
 
-        touch "$STUDENT_PATH"/${student_id}.stu
-        echo "ID: '$student_id'" >> "$STUDENT_PATH"/${student_id}.stu
-        echo "Name: '$student_name'" >> "$STUDENT_PATH"/${student_id}.stu
-        echo "Email: '$email'" >> "$STUDENT_PATH"/${student_id}.stu
-        echo "Year: '$year'" >> "$STUDENT_PATH"/${student_id}.stu
+        touch "$STUDENT_PATH"/"${student_id}".stu
+        echo "ID: '$student_id'" >> "$STUDENT_PATH"/"${student_id}".stu
+        echo "Name: '$student_name'" >> "$STUDENT_PATH"/"${student_id}".stu
+        echo "Email: '$email'" >> "$STUDENT_PATH"/"${student_id}".stu
+        echo "Year: '$year'" >> "$STUDENT_PATH"/"${student_id}".stu
         echo
         echo "Student added successfully!"
         read -p "Press 'Enter' to continue..."
@@ -280,7 +284,6 @@ student_search() {
     fi
     read -p "Press 'Enter' to continue..."
 }
-
 
 student_update() {
     clear
@@ -493,11 +496,12 @@ student_menu() {
     done
 }
 
+# Subject Management
 subject_exist() {
-    local id="$1"
-    if [[ -f ""$SUBJECT_PATH"/${id}.sub" ]]
+    id="$1"
+    if [[ -f "$SUBJECT_PATH"/"${id}".sub ]]
         then
-            echo "subjects with code: ${id} exists"
+            # echo "subjects with code: ${id} exists"
             return 0
     else
         echo "subjects doesn't exists"
@@ -557,11 +561,11 @@ subject_add() {
             fi
         done
         
-        touch "$SUBJECT_PATH"/${code}.sub
-        touch "$GRADE_PATH"/${code}.grd
-        echo "Code: '$code'" >> "$SUBJECT_PATH"/${code}.sub
-        echo "Name: '$subject_name'" >> "$SUBJECT_PATH"/${code}.sub
-        echo "Credits: '$credits'" >> "$SUBJECT_PATH"/${code}.sub
+        touch "$SUBJECT_PATH"/"${code}".sub
+        touch "$GRADE_PATH"/"${code}".grd
+        echo "Code: '$code'" >> "$SUBJECT_PATH"/"${code}".sub
+        echo "Name: '$subject_name'" >> "$SUBJECT_PATH"/"${code}".sub
+        echo "Credits: '$credits'" >> "$SUBJECT_PATH"/"${code}".sub
         echo
         echo "Subject added successfully!"
         read -p "Press 'Enter' to continue..."
@@ -615,7 +619,7 @@ subject_update() {
             elif subject_exist $code
             then 
                 clear
-                cat "$SUBJECT_PATH"/${code}.sub
+                cat "$SUBJECT_PATH"/"${code}".sub
                 echo ==========================================
                 echo Select what to update: 
                 echo ==========================================
@@ -630,11 +634,11 @@ subject_update() {
                             if validate_name "$new_name"
                             then
                                 sed -i "s/^Name: .*/Name: '$new_name'/" \
-                                    ""$SUBJECT_PATH"/${code}.sub"
+                                    "$SUBJECT_PATH"/"${code}".sub
                                 
                                 echo Updated!
                                 echo =========================================
-                                cat "$SUBJECT_PATH"/${code}.sub
+                                cat "$SUBJECT_PATH"/"${code}".sub
                                 echo =========================================
                                 read -p "Press 'Enter' to continue..."
                                 echo "Type 3 or 'Back' to go back..."
@@ -650,11 +654,11 @@ subject_update() {
                             if validate_credit_hours "$new_credit"
                             then
                                 sed -i "s/^Credits: .*/Credits: '$new_credit'/" \
-                                    ""$SUBJECT_PATH"/${code}.sub"
+                                    "$SUBJECT_PATH"/"${code}".sub
                                 
                                 echo Updated!
                                 echo =========================================
-                                cat "$SUBJECT_PATH"/${code}.sub
+                                cat "$SUBJECT_PATH"/"${code}".sub
                                 echo =========================================
                                 read -p "Press 'Enter' to continue..."
                                 echo "Type 3 or 'Back' to go back..."
@@ -698,8 +702,8 @@ subject_delete() {
             read -p "Are you sure You want to delete subject: ${code}? (y|n): " answer
             if [[ $answer == "y" ]]
             then
-                rm "$SUBJECT_PATH"/${code}.sub
-                rm "$GRADE_PATH"/${code}.grd
+                rm "$SUBJECT_PATH"/"${code}".sub
+                rm "$GRADE_PATH"/"${code}".grd
                 echo Deleted!
                 read -p "Press 'Enter' to continue..."
                 break
@@ -714,7 +718,6 @@ subject_delete() {
         fi
     done
 }
-
 
 subject_menu() {
     while true
@@ -931,7 +934,7 @@ assign_grade(){
     echo =====================================================
     while true
     do
-        read -p "Type the ID of the subject you want to assign the grade to: " subject_id
+        read -p "Type the Code of the subject you want to assign the grade to: " subject_id
         if subject_exist $subject_id
         then
             break
@@ -978,7 +981,7 @@ update_grade(){
     echo =====================================================
     while true
     do
-        read -p "Type the ID of the subject you want to update the grade of: " subject_id
+        read -p "Type the Code of the subject you want to update the grade of: " subject_id
         if subject_exist $subject_id
         then
             break
@@ -1020,7 +1023,7 @@ delete_grade(){
     echo =====================================================
     while true
     do
-        read -p "Type the ID of the subject you want to delete the grade of: " subject_id
+        read -p "Type the Code of the subject you want to delete the grade of: " subject_id
         if subject_exist $subject_id
         then
             break
@@ -1038,7 +1041,7 @@ view_grades_by_subject(){
     echo ================================
     while true
     do
-        read -p "Type the ID of the subject you want to view the grades of: " subject_id
+        read -p "Type the Code of the subject you want to view the grades of: " subject_id
         if subject_exist $subject_id
         then
             break
@@ -1169,7 +1172,7 @@ subject_statistics(){
     echo ================================
     while true
     do
-        read -p "Type the ID of the Subject you want to view: " subject_id
+        read -p "Type the Code of the Subject you want to view: " subject_id
         if subject_exist $subject_id
         then
             break
